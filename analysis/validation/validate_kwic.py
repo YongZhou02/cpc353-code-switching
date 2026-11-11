@@ -29,7 +29,7 @@ DEFAULT_KEYWORDS = (
     "sedap", "makan", "murah", "pedas", "lepak", "kedai",
     "best", "good", "nice", "service", "food", "delicious",
 )
-CONTEXT_CHARS = 70
+context_chars = 70
 
 SCHEMAS = {
     "01_language_distribution.csv": [
@@ -226,8 +226,8 @@ def locate_output_match(row: pd.Series, source_text: str) -> tuple[re.Match[str]
     right_expected = str(row["Right Context"])
     candidates: list[re.Match[str]] = []
     for match in re.finditer(re.escape(node), source_text, re.IGNORECASE):
-        left = normalize_space(source_text[max(0, match.start() - CONTEXT_CHARS):match.start()])
-        right = normalize_space(source_text[match.end():match.end() + CONTEXT_CHARS])
+        left = normalize_space(source_text[max(0, match.start() - context_chars):match.start()])
+        right = normalize_space(source_text[match.end():match.end() + context_chars])
         if left == left_expected and right == right_expected:
             candidates.append(match)
     if len(candidates) != 1:
@@ -275,7 +275,7 @@ def compare_table(filename: str, actual: pd.DataFrame, expected: pd.DataFrame, k
             expected_value = expected_indexed.at[key, column]
             if column.startswith("Percentage"):
                 try:
-                    agrees = abs(float(actual_value) - float(expected_value)) < 0.005
+                    agrees = abs(float(str(actual_value)) - float(str(expected_value))) < 0.005
                 except (TypeError, ValueError):
                     agrees = False
             else:
@@ -466,7 +466,7 @@ def validate(
         "type_counts": type_counts,
         "type_memberships": sum(type_counts.values()),
         "combination_counts": combination_counts,
-        "language_counts": {str(k): int(v) for k, v in language_counts.items()},
+        "language_counts": {str(k): int(str(v)) for k, v in language_counts.items()},
         "keyword_occurrences": dict(occurrence_counts),
         "keyword_review_counts": {k: len(v) for k, v in review_sets.items()},
     }
@@ -641,11 +641,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    global CONTEXT_CHARS
+    global context_chars
     args = parse_args()
     if args.context_chars < 10:
         raise SystemExit("--context-chars must be at least 10")
-    CONTEXT_CHARS = args.context_chars
+    context_chars = args.context_chars
     paths = ValidationPaths(args.source, args.output_dir, args.evidence_dir)
     keywords = tuple(dict.fromkeys(str(word).casefold() for word in args.keywords))
     try:

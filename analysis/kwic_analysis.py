@@ -225,7 +225,7 @@ def lexical_frequency(code_switched: pd.DataFrame, top_n: int) -> pd.DataFrame:
         for token in set(tokens):
             review_sets.setdefault(token, set()).add(review_id)
 
-    rows = [
+    rows: list[dict[str, str | int]] = [
         {
             "Token": token,
             "Occurrences": count,
@@ -247,8 +247,8 @@ def write_report(
 ) -> None:
     top_type = switching.sort_values("Review Count", ascending=False).iloc[0]
     top_type_name = str(top_type["Switching Type"])
-    top_type_count = int(top_type["Review Count"])
-    top_type_percentage = float(top_type["Percentage of Code-Switched Reviews"])
+    top_type_count = int(str(top_type["Review Count"]))
+    top_type_percentage = float(str(top_type["Percentage of Code-Switched Reviews"]))
     lines = [
         "# English-Malay Code-Switching KWIC Analysis",
         "",

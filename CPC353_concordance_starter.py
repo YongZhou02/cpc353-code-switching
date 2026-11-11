@@ -74,7 +74,7 @@ def run_analysis(data: pd.DataFrame, output_dir: Path) -> None:
     switching.to_csv(output_dir / "02_switching_type_distribution.csv", index=False, encoding="utf-8-sig")
 
     # Concordance: literal complete-word matches; preserve the original text.
-    kwic_rows = []
+    kwic_rows: list[dict[str, object]] = []
     for _, review in code_switched.iterrows():
         full_text = review["Review Text"]
         for keyword in KEYWORDS:
