@@ -17,7 +17,6 @@ import csv
 import re
 from collections import Counter
 from pathlib import Path
-from typing import cast
 
 import pandas as pd
 
@@ -70,22 +69,23 @@ def load_reviews(csv_path: Path) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Missing required columns: {sorted(missing)}")
 
-    review_ids = cast(pd.Series, data["Review ID"]).astype(str)
+    review_ids = data["Review ID"].astype(str)
     valid_rows = review_ids.str.fullmatch(r"REV-\d+")
-    data = cast(pd.DataFrame, data.loc[valid_rows]).copy()
+    data = data.loc[valid_rows].copy()
     for column in required:
-        data.loc[:, column] = cast(pd.Series, data[column]).astype(str).str.strip()
+        values = data[column].astype(str)
+        data.loc[:, column] = values if column == "Review Text" else values.str.strip()
 
     if data.empty:
         raise ValueError("No valid REV-xxx review rows were found.")
-    review_ids = cast(pd.Series, data["Review ID"])
+    review_ids = data["Review ID"]
     duplicate_rows = review_ids.duplicated()
     if bool(duplicate_rows.any()):
-        duplicates = cast(pd.Series, data.loc[duplicate_rows, "Review ID"]).tolist()
+        duplicates = data.loc[duplicate_rows, "Review ID"].tolist()
         raise ValueError(f"Duplicate Review IDs: {duplicates}")
-    blank_rows = cast(pd.Series, data["Review Text"]).eq("")
+    blank_rows = data["Review Text"].eq("")
     if bool(blank_rows.any()):
-        blank_ids = cast(pd.Series, data.loc[blank_rows, "Review ID"]).tolist()
+        blank_ids = data.loc[blank_rows, "Review ID"].tolist()
         raise ValueError(f"Blank review text: {blank_ids}")
     return data
 
@@ -94,11 +94,14 @@ def parse_switch_types(value: str) -> tuple[str, ...]:
     """Parse a comma/semicolon/slash separated multi-label cell."""
     labels = re.split(r"\s*(?:,|;|/|\|)\s*", value.strip()) if value.strip() else []
     canonical = {label.casefold(): label for label in SWITCH_TYPES}
-    found = set()
+    found: set[str] = set()
     for label in labels:
         matched = canonical.get(label.casefold())
-        if matched:
-            found.add(matched)
+        if matched is None:
+            raise ValueError(f"Unknown switching type: {label!r}")
+        found.add(matched)
+    if not found:
+        raise ValueError("Code-switched review has no recognised switching type")
     # Canonical ordering prevents equivalent combinations such as
     # "Intra + Inter" and "Inter + Intra" from becoming separate rows.
     return tuple(label for label in SWITCH_TYPES if label in found)
@@ -122,8 +125,11 @@ def language_distribution(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def switching_statistics(code_switched: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    parsed = code_switched["Code-Switching Type"].map(parse_switch_types)
-    counts = Counter(label for labels in parsed for label in labels)
+    parsed: list[tuple[str, ...]] = [
+        parse_switch_types(str(value))
+        for value in code_switched["Code-Switching Type"].tolist()
+    ]
+    counts: Counter[str] = Counter(label for labels in parsed for label in labels)
     denominator = len(code_switched)
 
     distribution = pd.DataFrame({
@@ -134,8 +140,8 @@ def switching_statistics(code_switched: pd.DataFrame) -> tuple[pd.DataFrame, pd.
         100 * distribution["Review Count"] / denominator
     ).round(2) if denominator else 0.0
 
-    combination_names = parsed.map(
-        lambda labels: " + ".join(labels) if labels else "No recognised label"
+    combination_names = pd.Series(
+        [" + ".join(labels) for labels in parsed], dtype=str
     )
     combinations = (
         combination_names.value_counts()
@@ -154,7 +160,7 @@ def build_kwic(
     context_chars: int,
 ) -> pd.DataFrame:
     """Create one concordance row per complete-word keyword occurrence."""
-    rows = []
+    rows: list[dict[str, str]] = []
     for _, review in code_switched.iterrows():
         text = str(review["Review Text"])
         for keyword in keywords:
@@ -196,7 +202,7 @@ def keyword_summary(kwic: pd.DataFrame, code_switched_count: int) -> pd.DataFram
             Reviews_Containing_Keyword=("Review ID", "nunique"),
         )
     )
-    summary = cast(pd.DataFrame, summary).sort_values("Occurrences", ascending=False)
+    summary = summary.sort_values("Occurrences", ascending=False)
     summary = summary.rename(columns={
         "Reviews_Containing_Keyword": "Reviews Containing Keyword"
     })
@@ -209,7 +215,7 @@ def keyword_summary(kwic: pd.DataFrame, code_switched_count: int) -> pd.DataFram
 def lexical_frequency(code_switched: pd.DataFrame, top_n: int) -> pd.DataFrame:
     """Return exploratory content-word frequencies from code-switched reviews."""
     review_sets: dict[str, set[str]] = {}
-    occurrences = Counter()
+    occurrences: Counter[str] = Counter()
     for _, review in code_switched.iterrows():
         review_text = str(review["Review Text"])
         review_id = str(review["Review ID"])
@@ -305,9 +311,9 @@ def analyse(
     top_n: int,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    language_values = cast(pd.Series, data["Language Classification"]).astype(str)
+    language_values = data["Language Classification"].astype(str)
     code_switched_mask = language_values.str.casefold().eq("code-switched")
-    code_switched = cast(pd.DataFrame, data.loc[code_switched_mask]).copy()
+    code_switched = data.loc[code_switched_mask].copy()
 
     language = language_distribution(data)
     switching, combinations = switching_statistics(code_switched)
@@ -372,6 +378,8 @@ def parse_args() -> argparse.Namespace:
         parser.error("--context-chars must be at least 10")
     if args.top_n < 1:
         parser.error("--top-n must be at least 1")
+    if not args.keywords or any(not str(value).strip() for value in args.keywords):
+        parser.error("--keywords must contain nonempty keywords")
     return args
 
 

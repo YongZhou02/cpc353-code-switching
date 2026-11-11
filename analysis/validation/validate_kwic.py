@@ -15,7 +15,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, TypedDict, cast
+from typing import Iterable, TypedDict
 
 import pandas as pd
 
@@ -134,7 +134,7 @@ PATTERN_EXAMPLES = [
     ("REV-123", "Inter-sentential switching", "Excellent service.Makanan sedap.Reasonable price.", "English, Malay, and English occur in successive sentence-like units."),
     ("REV-037", "Tag switching", "But overall, okay lah.", "Malay discourse particle 'lah' is attached to an otherwise English expression."),
     ("REV-097", "Tag switching", "the food so delicious and yummy good..good must try the friedmeat,soupnya juga sedap,kankongnya yummy trylah", "Malay particle '-lah' is attached to English 'try'; the rest of the review is also mixed."),
-    ("REV-142", "Tag switching (uncertain)", "but sometimes u need a good food for 'makan besar' right ?", "The final 'right?' functions as a tag, but the exact language-switch boundary is debatable."),
+    ("REV-142", "Not English-Malay tag switching (exclude as Tag evidence)", "but sometimes u need a good food for 'makan besar' right ?", "The final English 'right?' is an English tag attached to English material; it does not demonstrate English-Malay tag switching."),
 ]
 
 
@@ -148,6 +148,8 @@ def normalize_space(text: str) -> str:
 
 def parse_labels(value: str) -> tuple[str, ...]:
     values = {item.strip().casefold() for item in re.split(r"[,;/|]", value) if item.strip()}
+    if not values:
+        raise ValidationError("Code-switched review has no switching label")
     unknown = values - {label.casefold() for label in SWITCH_TYPES}
     if unknown:
         raise ValidationError(f"Unknown switching label(s): {sorted(unknown)}")
@@ -168,16 +170,16 @@ def load_source(source_path: Path) -> pd.DataFrame:
     missing = required - set(data.columns)
     if missing:
         raise ValidationError(f"Source dataset is missing columns: {sorted(missing)}")
-    ids = cast(pd.Series, data["Review ID"]).astype(str).str.strip()
-    reviews = cast(pd.DataFrame, data.loc[ids.str.fullmatch(r"REV-\d+")]).copy()
-    review_ids = cast(pd.Series, reviews["Review ID"]).astype(str).str.strip()
+    ids = data["Review ID"].astype(str).str.strip()
+    reviews = data.loc[ids.str.fullmatch(r"REV-\d+")].copy()
+    review_ids = reviews["Review ID"].astype(str).str.strip()
     duplicate_mask = review_ids.duplicated(keep=False)
     if bool(duplicate_mask.any()):
         duplicates = sorted(set(review_ids.loc[duplicate_mask].tolist()))
         raise ValidationError(f"Duplicate Review IDs in source dataset: {duplicates}")
     if reviews.empty:
         raise ValidationError("Source dataset contains no valid REV-xxx reviews")
-    if bool(cast(pd.Series, reviews["Review Text"]).astype(str).eq("").any()):
+    if bool(reviews["Review Text"].astype(str).eq("").any()):
         raise ValidationError("Source dataset contains blank Review Text values")
     return reviews
 
@@ -194,23 +196,23 @@ def read_output(output_dir: Path, filename: str) -> pd.DataFrame:
 
 
 def source_lookups(source: pd.DataFrame) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
-    ids = cast(pd.Series, source["Review ID"]).astype(str).str.strip().tolist()
-    texts = cast(pd.Series, source["Review Text"]).astype(str).tolist()
-    languages = cast(pd.Series, source["Language Classification"]).astype(str).str.strip().tolist()
-    labels = cast(pd.Series, source["Code-Switching Type"]).astype(str).str.strip().tolist()
+    ids = source["Review ID"].astype(str).str.strip().tolist()
+    texts = source["Review Text"].astype(str).tolist()
+    languages = source["Language Classification"].astype(str).str.strip().tolist()
+    labels = source["Code-Switching Type"].astype(str).str.strip().tolist()
     return dict(zip(ids, texts)), dict(zip(ids, languages)), dict(zip(ids, labels))
 
 
 def code_switched_reviews(source: pd.DataFrame) -> pd.DataFrame:
-    language = cast(pd.Series, source["Language Classification"]).astype(str).str.strip()
-    return cast(pd.DataFrame, source.loc[language.str.casefold().eq("code-switched")]).copy()
+    language = source["Language Classification"].astype(str).str.strip()
+    return source.loc[language.str.casefold().eq("code-switched")].copy()
 
 
 def expected_matches(source: pd.DataFrame, keywords: Iterable[str]) -> list[MatchKey]:
     expected: list[MatchKey] = []
     for _, review in code_switched_reviews(source).iterrows():
         review_id = str(review["Review ID"]).strip()
-        text = str(review["Review Text"]).strip()
+        text = str(review["Review Text"])
         for keyword in keywords:
             pattern = re.compile(rf"(?<!\w){re.escape(keyword)}(?!\w)", re.IGNORECASE)
             for match in pattern.finditer(text):
@@ -254,8 +256,8 @@ def classify_full_review_difference(exported: str, source: str) -> str:
 
 def compare_table(filename: str, actual: pd.DataFrame, expected: pd.DataFrame, key_column: str) -> None:
     errors: list[str] = []
-    actual_keys = cast(pd.Series, actual[key_column]).astype(str).tolist()
-    expected_keys = cast(pd.Series, expected[key_column]).astype(str).tolist()
+    actual_keys = actual[key_column].astype(str).tolist()
+    expected_keys = expected[key_column].astype(str).tolist()
     if len(actual_keys) != len(set(actual_keys)):
         errors.append(f"duplicate keys in exported {key_column}")
     if set(actual_keys) != set(expected_keys):
@@ -294,26 +296,29 @@ def recompute_statistics(
     total = len(source)
     cs = code_switched_reviews(source)
     cs_count = len(cs)
-    language_counts = cast(pd.Series, source["Language Classification"]).astype(str).str.strip().value_counts()
+    language_counts = source["Language Classification"].astype(str).str.strip().value_counts()
     language = pd.DataFrame({
         "Language Classification": language_counts.index.astype(str),
         "Review Count": language_counts.astype(int).tolist(),
     })
     language["Percentage of All Reviews"] = (
-        100 * cast(pd.Series, language["Review Count"]).astype(int) / total
+        100 * language["Review Count"].astype(int) / total
     ).round(2)
 
-    parsed = cast(pd.Series, cs["Code-Switching Type"]).astype(str).map(parse_labels)
+    parsed = cs["Code-Switching Type"].astype(str).map(parse_labels)
     type_counts = {label: sum(label in labels for labels in parsed) for label in SWITCH_TYPES}
     switching = pd.DataFrame({
         "Switching Type": SWITCH_TYPES,
         "Review Count": [type_counts[label] for label in SWITCH_TYPES],
     })
     switching["Percentage of Code-Switched Reviews"] = (
-        100 * cast(pd.Series, switching["Review Count"]).astype(int) / cs_count
+        100 * switching["Review Count"].astype(int) / cs_count
     ).round(2)
 
-    combination_counts = Counter(" + ".join(labels) for labels in parsed)
+    combination_counts: Counter[str] = Counter(
+        " + ".join(parse_labels(str(value)))
+        for value in cs["Code-Switching Type"].tolist()
+    )
     combinations = pd.DataFrame([
         {
             "Label Combination": combination,
@@ -401,7 +406,7 @@ def validate(
             )
 
         source_text = texts[review_id]
-        match, complete_word = locate_output_match(row, source_text.strip())
+        match, complete_word = locate_output_match(row, source_text)
         if match is None:
             errors.append(f"KWIC row {row_number}: node/context cannot be uniquely located in {review_id}")
             continue
@@ -434,19 +439,19 @@ def validate(
     if errors:
         raise ValidationError("Validation failed:\n- " + "\n- ".join(errors))
 
-    review_table = build_kwic_evidence(kwic, texts)
+    review_table = build_kwic_evidence(kwic, texts, keywords)
     pattern_table = build_pattern_evidence(source, labels)
     occurrence_counts = Counter(match.keyword for match in expected)
     review_sets: dict[str, set[str]] = {}
     for match in expected:
         review_sets.setdefault(match.keyword, set()).add(match.review_id)
-    language_counts = cast(pd.Series, source["Language Classification"]).astype(str).str.strip().value_counts()
+    language_counts = source["Language Classification"].astype(str).str.strip().value_counts()
     summary: AuditSummary = {
         "source_reviews": len(source),
         "code_switched_reviews": len(cs),
         "kwic_rows": len(kwic),
         "expected_kwic_rows": len(expected),
-        "kwic_review_ids": int(cast(pd.Series, kwic["Review ID"]).nunique()),
+        "kwic_review_ids": int(kwic["Review ID"].nunique()),
         "keyword_node_mismatches": keyword_node_mismatches,
         "review_label_mismatches": review_label_mismatches,
         "non_code_switched_rows": non_code_switched_rows,
@@ -481,17 +486,19 @@ def relevant_segment(text: str, match: re.Match[str]) -> str:
     return normalize_space(text[start:end])
 
 
-def build_kwic_evidence(kwic: pd.DataFrame, texts: dict[str, str]) -> pd.DataFrame:
-    review_ids = cast(pd.Series, kwic["Review ID"]).astype(str)
-    keywords = cast(pd.Series, kwic["Keyword"]).astype(str)
-    rows = []
+def build_kwic_evidence(kwic: pd.DataFrame, texts: dict[str, str], allowed_keywords: tuple[str, ...]) -> pd.DataFrame:
+    review_ids = kwic["Review ID"].astype(str)
+    keywords = kwic["Keyword"].astype(str)
+    rows: list[dict[str, str]] = []
     for review_id, keyword, occurrence, category, interpretation in KWIC_SELECTIONS:
+        if keyword.casefold() not in allowed_keywords:
+            continue
         mask = review_ids.eq(review_id) & keywords.str.casefold().eq(keyword.casefold())
-        candidates = cast(pd.DataFrame, kwic.loc[mask]).reset_index(drop=True)
+        candidates = kwic.loc[mask].reset_index(drop=True)
         if len(candidates) < occurrence:
             raise ValidationError(f"Selected evidence is missing: {review_id} {keyword} #{occurrence}")
         row = candidates.iloc[occurrence - 1]
-        source_text = texts[review_id].strip()
+        source_text = texts[review_id]
         match, _ = locate_output_match(row, source_text)
         if match is None:
             raise ValidationError(f"Cannot locate selected evidence: {review_id} {keyword}")
@@ -505,12 +512,16 @@ def build_kwic_evidence(kwic: pd.DataFrame, texts: dict[str, str]) -> pd.DataFra
             "Occurrence-level category": category,
             "Suggested interpretation": interpretation,
         })
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=[
+        "Review ID", "Evidence source", "Relevant sentence or segment", "Keyword",
+        "Surrounding context", "Existing review-level label",
+        "Occurrence-level category", "Suggested interpretation",
+    ])
 
 
 def build_pattern_evidence(source: pd.DataFrame, labels: dict[str, str]) -> pd.DataFrame:
     texts, _, _ = source_lookups(source)
-    rows = []
+    rows: list[dict[str, str]] = []
     for review_id, pattern, excerpt, interpretation in PATTERN_EXAMPLES:
         if excerpt not in texts[review_id]:
             raise ValidationError(f"Pattern excerpt for {review_id} is not an exact source substring")
@@ -544,11 +555,11 @@ def write_evidence(
         index=False,
         encoding="utf-8-sig",
     )
-    clear_mask = cast(pd.Series, review_table["Occurrence-level category"]).eq(
+    clear_mask = review_table["Occurrence-level category"].eq(
         "Clear code-switching evidence"
     )
-    clear = cast(pd.DataFrame, review_table.loc[clear_mask]).copy()
-    qualified = cast(pd.DataFrame, review_table.loc[~clear_mask]).copy()
+    clear = review_table.loc[clear_mask].copy()
+    qualified = review_table.loc[~clear_mask].copy()
     type_counts = summary["type_counts"]
     report = [
         "# CPC353 KWIC Validation Evidence",
@@ -625,11 +636,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--evidence-dir", type=Path, default=DEFAULT_EVIDENCE_DIR)
     parser.add_argument("--keywords", nargs="+", default=list(DEFAULT_KEYWORDS))
+    parser.add_argument("--context-chars", type=int, default=70)
     return parser.parse_args()
 
 
 def main() -> None:
+    global CONTEXT_CHARS
     args = parse_args()
+    if args.context_chars < 10:
+        raise SystemExit("--context-chars must be at least 10")
+    CONTEXT_CHARS = args.context_chars
     paths = ValidationPaths(args.source, args.output_dir, args.evidence_dir)
     keywords = tuple(dict.fromkeys(str(word).casefold() for word in args.keywords))
     try:

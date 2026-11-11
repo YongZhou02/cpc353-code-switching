@@ -4,7 +4,7 @@ Special Topic Study on Natural Language Processing (CPC353, Semester 1 2026/2027
 
 **Research question (RQ1):** What are the common English–Malay code-switching patterns found in food product reviews?
 
-**Domain:** Malaysian online reviews of soft drinks *(category to be confirmed)*.
+**Domain:** Malaysian online eatery / restaurant reviews (real reviews collected via a Kaggle restaurant-review dataset).
 
 ## Team
 
@@ -21,7 +21,7 @@ All members collect and annotate about 50 reviews each.
 | Folder | Contents |
 | --- | --- |
 | `data/` | Dataset files (raw export and cleaned version) |
-| `analysis/` | Concordance, n-gram and frequency scripts |
+| `analysis/` | Python KWIC concordance, frequency analysis, and independent validation |
 
 ## Setup
 
