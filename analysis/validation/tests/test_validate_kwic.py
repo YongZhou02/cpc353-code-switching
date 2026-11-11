@@ -50,7 +50,7 @@ class ValidatorCorruptionTests(unittest.TestCase):
     def test_baseline_passes(self) -> None:
         summary, review_table, pattern_table = validate(self.paths)
         self.assertEqual(summary["kwic_rows"], summary["expected_kwic_rows"])
-        self.assertEqual(len(review_table), 27)
+        self.assertEqual(len(review_table), 26)
         self.assertGreaterEqual(len(pattern_table), 4)
 
     def test_corrupted_keyword_value_fails(self) -> None:

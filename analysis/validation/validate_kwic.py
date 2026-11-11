@@ -114,7 +114,6 @@ KWIC_SELECTIONS = [
     ("REV-069", "murah", 1, "Uncertain", "Malay adjectives linked only by common loanword 'and'; do not force a classification."),
     ("REV-180", "pedas", 1, "Clear code-switching evidence", "English copular frame 'It's' takes the Malay adjective 'pedas'."),
     ("REV-001", "makan", 1, "Monolingual occurrence", "Immediate segment is Malay; the review switches to English elsewhere."),
-    ("REV-008", "sedap", 1, "Monolingual occurrence", "Immediate short question is Malay/dialectal and does not itself demonstrate switching."),
     ("REV-020", "sedap", 1, "Monolingual occurrence", "Standalone Malay phrase; review-level label must not classify this hit."),
     ("REV-002", "food", 1, "Monolingual occurrence", "Immediate sentence is English; the review is mixed elsewhere."),
     ("REV-018", "good", 1, "Monolingual occurrence", "Immediate sentence is English; 'good' is not a switching event."),

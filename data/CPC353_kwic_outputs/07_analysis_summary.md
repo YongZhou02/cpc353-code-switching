@@ -7,51 +7,51 @@ The analysis accepts the team's manual labels as the source of truth. Switching 
 ## Corpus overview
 
 - Total reviews: 190
-- Code-switched reviews: 179
+- Code-switched reviews: 176
 
 | Language Classification   |   Review Count |   Percentage of All Reviews |
 |:--------------------------|---------------:|----------------------------:|
-| Code-switched             |            179 |                       94.21 |
-| Malay                     |              6 |                        3.16 |
+| Code-switched             |            176 |                       92.63 |
+| Malay                     |              8 |                        4.21 |
+| English                   |              3 |                        1.58 |
 | Other/uncertain           |              3 |                        1.58 |
-| English                   |              2 |                        1.05 |
 
 ## Code-switching patterns
 
 | Switching Type   |   Review Count |   Percentage of Code-Switched Reviews |
 |:-----------------|---------------:|--------------------------------------:|
-| Intra-sentential |            143 |                                 79.89 |
-| Inter-sentential |             59 |                                 32.96 |
-| Tag Switching    |              9 |                                  5.03 |
+| Intra-sentential |            140 |                                 79.55 |
+| Inter-sentential |             59 |                                 33.52 |
+| Tag Switching    |              7 |                                  3.98 |
 
-The most common annotated pattern is **Intra-sentential**, found in 143 code-switched reviews (79.89%).
+The most common annotated pattern is **Intra-sentential**, found in 140 code-switched reviews (79.55%).
 
 ## Multi-label combinations
 
 | Label Combination                                   |   Review Count |   Percentage of Code-Switched Reviews |
 |:----------------------------------------------------|---------------:|--------------------------------------:|
-| Intra-sentential                                    |            112 |                                 62.57 |
-| Inter-sentential                                    |             36 |                                 20.11 |
-| Intra-sentential + Inter-sentential                 |             22 |                                 12.29 |
-| Intra-sentential + Tag Switching                    |              8 |                                  4.47 |
-| Intra-sentential + Inter-sentential + Tag Switching |              1 |                                  0.56 |
+| Intra-sentential                                    |            111 |                                 63.07 |
+| Inter-sentential                                    |             36 |                                 20.45 |
+| Intra-sentential + Inter-sentential                 |             22 |                                 12.5  |
+| Intra-sentential + Tag Switching                    |              6 |                                  3.41 |
+| Intra-sentential + Inter-sentential + Tag Switching |              1 |                                  0.57 |
 
 ## KWIC keyword summary
 
 | Keyword   |   Occurrences |   Reviews Containing Keyword |   Percentage of Code-Switched Reviews |
 |:----------|--------------:|-----------------------------:|--------------------------------------:|
-| food      |            71 |                           53 |                                 29.61 |
-| sedap     |            68 |                           57 |                                 31.84 |
-| good      |            40 |                           28 |                                 15.64 |
-| best      |            34 |                           28 |                                 15.64 |
-| makan     |            32 |                           28 |                                 15.64 |
-| delicious |            27 |                           24 |                                 13.41 |
-| service   |            22 |                           18 |                                 10.06 |
-| kedai     |            17 |                           12 |                                  6.7  |
-| nice      |            16 |                           15 |                                  8.38 |
-| pedas     |            10 |                            8 |                                  4.47 |
-| lepak     |             7 |                            5 |                                  2.79 |
-| murah     |             4 |                            4 |                                  2.23 |
+| food      |            70 |                           52 |                                 29.55 |
+| sedap     |            66 |                           55 |                                 31.25 |
+| good      |            40 |                           28 |                                 15.91 |
+| best      |            33 |                           27 |                                 15.34 |
+| makan     |            32 |                           28 |                                 15.91 |
+| delicious |            27 |                           24 |                                 13.64 |
+| service   |            22 |                           18 |                                 10.23 |
+| kedai     |            17 |                           12 |                                  6.82 |
+| nice      |            16 |                           15 |                                  8.52 |
+| pedas     |            10 |                            8 |                                  4.55 |
+| lepak     |             7 |                            5 |                                  2.84 |
+| murah     |             4 |                            4 |                                  2.27 |
 
 ## Interpretation guidance
 
