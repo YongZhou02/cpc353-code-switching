@@ -1,6 +1,6 @@
 ﻿Label Combination,Review Count,Percentage of Code-Switched Reviews
-Intra-sentential,111,63.07
-Inter-sentential,36,20.45
-Intra-sentential + Inter-sentential,22,12.5
-Intra-sentential + Tag Switching,6,3.41
+Intra-sentential,111,63.43
+Inter-sentential,36,20.57
+Intra-sentential + Inter-sentential,22,12.57
+Intra-sentential + Tag Switching,5,2.86
 Intra-sentential + Inter-sentential + Tag Switching,1,0.57

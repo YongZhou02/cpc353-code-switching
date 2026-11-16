@@ -6,32 +6,32 @@
 
 ## Match correctness
 
-- Exported KWIC rows checked: 344
+- Exported KWIC rows checked: 345
 - Keyword/Node disagreements: 0
 - Review-level label disagreements: 0
 - Rows from non-Code-switched reviews: 0
 - Substring-only matches: 0
-- Exact Full Review matches: 344
+- Exact Full Review matches: 345
 - LF/CRLF-only differences: 0
 - Trailing-whitespace-only differences: 0
 - Real content mismatches: 0
 
 ## Extraction completeness
 
-- Independently expected KWIC matches: 344
+- Independently expected KWIC matches: 345
 - Missing matches: 0
 - Duplicate matches: 0
 - Unexpected matches: 0
 
 ## Recomputed statistics
 
-- Language counts: {'Code-switched': 176, 'Malay': 8, 'English': 3, 'Other/uncertain': 3}
-- Code-switched reviews: 176 of 190
-- Switching-type counts: {'Intra-sentential': 140, 'Inter-sentential': 59, 'Tag Switching': 7}
-- Multi-label memberships: 206
-- Mutually exclusive label combinations: {'Inter-sentential': 36, 'Intra-sentential': 111, 'Intra-sentential + Inter-sentential': 22, 'Intra-sentential + Tag Switching': 6, 'Intra-sentential + Inter-sentential + Tag Switching': 1}
-- Keyword occurrences: {'makan': 32, 'good': 40, 'sedap': 66, 'food': 70, 'best': 33, 'murah': 4, 'delicious': 27, 'pedas': 10, 'service': 22, 'nice': 16, 'lepak': 7, 'kedai': 17}
-- Distinct reviews by keyword: {'makan': 28, 'good': 28, 'sedap': 55, 'food': 52, 'best': 27, 'murah': 4, 'delicious': 24, 'pedas': 8, 'service': 18, 'nice': 15, 'lepak': 5, 'kedai': 12}
+- Language counts: {'Code-switched': 175, 'Malay': 8, 'English': 4, 'Other/uncertain': 3}
+- Code-switched reviews: 175 of 190
+- Switching-type counts: {'Intra-sentential': 139, 'Inter-sentential': 59, 'Tag Switching': 6}
+- Multi-label memberships: 204
+- Mutually exclusive label combinations: {'Inter-sentential': 36, 'Intra-sentential': 111, 'Intra-sentential + Inter-sentential': 22, 'Intra-sentential + Tag Switching': 5, 'Intra-sentential + Inter-sentential + Tag Switching': 1}
+- Keyword occurrences: {'makan': 35, 'good': 39, 'sedap': 65, 'food': 70, 'best': 33, 'murah': 4, 'delicious': 27, 'pedas': 10, 'service': 22, 'nice': 16, 'lepak': 7, 'kedai': 17}
+- Distinct reviews by keyword: {'makan': 29, 'good': 27, 'sedap': 54, 'food': 52, 'best': 27, 'murah': 4, 'delicious': 24, 'pedas': 8, 'service': 18, 'nice': 15, 'lepak': 5, 'kedai': 12}
 
 The four exported distribution/frequency CSVs were compared field by field against these independently recomputed values, including percentage denominators.
 
@@ -85,7 +85,7 @@ These are exact corpus excerpts, not extra KWIC nodes and not frequency evidence
 
 ## Evidence-based findings
 
-1. **Intra-sentential is the most common review-level annotation:** 140 of 176 code-switched reviews (79.55%). Clear illustrations include REV-002, REV-045, REV-082, REV-126, and REV-180. The frequency claim comes from the full corpus, not the purposive examples.
+1. **Intra-sentential is the most common review-level annotation:** 139 of 175 code-switched reviews (79.43%). Clear illustrations include REV-002, REV-045, REV-082, REV-126, and REV-180. The frequency claim comes from the full corpus, not the purposive examples.
 
 2. **Inter-sentential switching is present as a sentence-boundary pattern.** REV-044 moves from a Malay sentence to an English sentence; REV-123 moves English-Malay-English across successive units. These examples demonstrate form, not prevalence.
 
